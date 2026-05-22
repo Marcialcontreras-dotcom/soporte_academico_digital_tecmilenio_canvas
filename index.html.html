@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Recursos Canvas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8fafc; 
+            color: #1e293b;
+        }
+        .video-card { 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            border-radius: 1.5rem;
+        }
+        .video-card:hover { 
+            transform: translateY(-8px); 
+            box-shadow: 0 25px 30px -10px rgba(0, 74, 69, 0.1); 
+        }
+        
+        /* Modal de Video */
+        #videoModal {
+            display: none;
+            backdrop-filter: blur(12px);
+            background-color: rgba(0, 21, 20, 0.95);
+        }
+        #videoModal.active {
+            display: flex;
+        }
+
+        /* Chat AI Panel */
+        #aiChatPanel {
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #aiChatPanel.active {
+            transform: translateX(0);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #004a45; border-radius: 10px; }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: #78be20;
+            border-radius: 50%;
+            display: inline-block;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .ai-link {
+            color: #78be20;
+            font-weight: 700;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <nav class="bg-[#004a45] shadow-xl sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center">
+                <div class="bg-white px-5 py-2 rounded-xl shadow-md flex items-center justify-center">
+                    <span class="text-[#004a45] font-black tracking-tighter text-base uppercase italic">Tecmilenio</span>
+                </div>
+                <div class="ml-6 hidden lg:block border-l border-white/20 pl-6">
+                    <h2 class="text-white text-[10px] font-bold uppercase tracking-[0.3em] opacity-80">Asistente Virtual</h2>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4 w-full md:w-auto">
+                <div class="relative flex-grow md:w-80">
+                    <input type="text" id="searchInput" placeholder="Buscar tutorial..." class="w-full bg-white/10 border border-white/10 rounded-2xl py-3 px-12 text-sm text-white placeholder:text-white/40 focus:outline-none focus:bg-white/20 focus:ring-2 focus:ring-[#78be20]/50 transition-all">
+                    <div class="absolute left-4 top-3.5 text-white/50">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </div>
+                </div>
+                <button onclick="toggleAIChat()" class="bg-[#78be20] text-[#004a45] p-3 rounded-2xl shadow-lg hover:bg-white transition-all flex items-center gap-2 group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-12 transition-transform"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <span class="hidden md:block font-bold text-xs">Asistente IA</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <header class="bg-white pt-20 pb-16 px-6 border-b border-slate-100 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-[#78be20]/5 rounded-full -mr-32 -mt-32"></div>
+        <div class="max-w-4xl mx-auto text-center relative z-10">
+            <div class="inline-flex items-center space-x-2 bg-[#00a859]/10 px-5 py-2 rounded-full mb-8 border border-[#00a859]/20">
+                <span class="w-2 h-2 bg-[#00a859] rounded-full animate-pulse"></span>
+                <span class="text-[#004a45] text-[11px] font-extrabold uppercase tracking-[0.2em]">Soporte Académico Digital</span>
+            </div>
+            <h1 class="text-4xl md:text-6xl font-black text-[#004a45] mb-6 tracking-tight leading-tight">
+                Centro de Recursos Canvas
+            </h1>
+            <p class="text-slate-500 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed font-medium">
+                Tutoriales detallados para navegar y utilizar tu plataforma educativa de manera eficiente.
+            </p>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-16">
+        <div id="filterContainer" class="flex flex-wrap justify-center gap-3 mb-16"></div>
+        <div id="videoGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
+    </main>
+
+    <div id="videoModal" class="fixed inset-0 z-[100] items-center justify-center p-4 md:p-10">
+        <div class="relative w-full max-w-5xl flex flex-col items-center">
+            <button onclick="closeVideo()" class="absolute -top-14 right-0 text-white/80 hover:text-white flex items-center space-x-3 group transition-all">
+                <span class="text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all">Cerrar Reproductor</span>
+                <div class="bg-white/10 p-2 rounded-full group-hover:bg-red-500 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </div>
+            </button>
+
+            <div class="relative w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-[0_0_80px_rgba(120,190,32,0.2)] border border-white/10">
+                <iframe id="videoPlayer" class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+
+            <div class="mt-8 w-full bg-white/10 border border-white/10 p-8 rounded-3xl backdrop-blur-md flex flex-col md:flex-row justify-between items-start gap-6">
+                <div class="text-center md:text-left flex-grow">
+                    <h2 class="text-white font-extrabold text-2xl mb-2" id="modalTitle">Título del Video</h2>
+                    <div id="aiSummaryContent" class="text-white/70 text-sm italic mb-4 max-w-2xl hidden"></div>
+                    <div class="flex flex-wrap gap-3">
+                        <button id="aiSummaryBtn" class="bg-white/10 hover:bg-white text-white hover:text-[#004a45] px-4 py-2 rounded-xl font-bold text-xs transition-all border border-white/20 flex items-center gap-2">
+                            <span>Resumen por IA</span>
+                        </button>
+                        <a id="directLink" href="#" target="_blank" class="text-white/60 hover:text-white px-4 py-2 rounded-xl font-bold text-xs transition-all border border-white/10 flex items-center gap-2">
+                            Enlace a YouTube
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="aiChatPanel" class="fixed top-0 right-0 h-full w-full md:w-[450px] bg-white z-[200] shadow-2xl flex flex-col border-l border-slate-200">
+        <div class="bg-[#004a45] p-6 text-white flex justify-between items-center">
+            <div>
+                <h3 class="font-black text-lg">Asistente de Consulta</h3>
+                <p class="text-[#78be20] text-[10px] font-bold uppercase tracking-widest">Localizador de Contenido</p>
+            </div>
+            <button onclick="toggleAIChat()" class="hover:bg-white/10 p-2 rounded-full transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+
+        <div id="chatMessages" class="flex-grow p-6 overflow-y-auto space-y-4 bg-slate-50">
+            <div class="bg-white border border-slate-200 p-4 rounded-2xl text-sm shadow-sm max-w-[90%]">
+                Bienvenido. Pregunta cualquier duda sobre el uso de Canvas y te indicará en qué video y minuto exacto se encuentra la respuesta.
+            </div>
+        </div>
+
+        <div class="p-6 bg-white border-t border-slate-100">
+            <div class="flex gap-2">
+                <input type="text" id="aiChatInput" placeholder="Ej: ¿Cómo subo una tarea?" class="flex-grow bg-slate-100 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#78be20] outline-none">
+                <button onclick="sendChatMessage()" id="sendChatBtn" class="bg-[#004a45] text-white p-3 rounded-2xl hover:bg-[#00a859] transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+            <p class="text-[9px] text-slate-400 mt-3 text-center uppercase tracking-widest font-bold">Respuesta basada en tutoriales oficiales</p>
+        </div>
+    </div>
+
+    <script>
+        const apiKey = "AIzaSyAfldSH1zsbFEr9JbkYf-4wRd0THDzy9Qw";
+        const videos = [
+            { 
+                id: 1, 
+                title: "🚀 ¡Tu Primer Acceso! Entra a Canvas sin Complicaciones", 
+                embedUrl: "https://www.youtube.com/embed/lf777UQVUBg", 
+                originalUrl: "https://www.youtube.com/watch?v=lf777UQVUBg",
+                category: "Primeros Pasos", 
+                subtopics: [{l: "Ingreso por Chrome", t: 10}, {l: "Ingreso por FireFox", t: 45}, {l: "Solución a errores de login", t: 80}] 
+            },
+            { 
+                id: 2, 
+                title: "🧭 Tour por Canvas: Domina la Página de Inicio", 
+                embedUrl: "https://www.youtube.com/embed/3nlkadip6kg", 
+                originalUrl: "https://www.youtube.com/watch?v=3nlkadip6kg",
+                category: "Primeros Pasos", 
+                subtopics: [{l: "Interfaz general", t: 15}, {l: "Menú global de navegación", t: 50}, {l: "Sección de ayuda rápida", t: 95}] 
+            },
+            { 
+                id: 3, 
+                title: "👤 Personaliza tu Cuenta: Configuración de Perfil", 
+                embedUrl: "https://www.youtube.com/embed/4GR4Nmh-alU", 
+                originalUrl: "https://www.youtube.com/watch?v=4GR4Nmh-alU",
+                category: "Primeros Pasos", 
+                subtopics: [{l: "Subir foto de perfil", t: 20}, {l: "Editar información personal", t: 60}, {l: "Enlaces y biografías", t: 110}] 
+            },
+            { 
+                id: 4, 
+                title: "📊 Tu Centro de Control: Organízate con el Tablero", 
+                embedUrl: "https://www.youtube.com/embed/NqOeYEGs5Yw", 
+                originalUrl: "https://www.youtube.com/watch?v=NqOeYEGs5Yw",
+                category: "Primeros Pasos", 
+                subtopics: [{l: "Tarjetas de cursos", t: 15}, {l: "Lista de actividades pendientes", t: 55}, {l: "Personalizar colores del tablero", t: 90}] 
+            },
+            { 
+                id: 5, 
+                title: "📚 Mis Asignaturas: Visualiza Todos tus Cursos", 
+                embedUrl: "https://www.youtube.com/embed/-a7JGT-KZXk", 
+                originalUrl: "https://www.youtube.com/watch?v=-a7JGT-KZXk",
+                category: "Mi Aula Virtual", 
+                subtopics: [{l: "Lista completa de cursos", t: 15}, {l: "Cursos pasados y futuros", t: 40}, {l: "Marcar cursos como favoritos", t: 75}] 
+            },
+            { 
+                id: 6, 
+                title: "🕵️‍♂️ Explorando el Aula: ¿Cómo veo mi curso?", 
+                embedUrl: "https://www.youtube.com/embed/-cTm2HIPZAk", 
+                originalUrl: "https://www.youtube.com/watch?v=-cTm2HIPZAk",
+                category: "Mi Aula Virtual", 
+                subtopics: [{l: "Estructura de módulos", t: 20}, {l: "Navegación interna", t: 65}, {l: "Página de inicio del curso", t: 110}] 
+            },
+            { 
+                id: 7, 
+                title: "📢 ¡Entérate de Todo! Revisa los Anuncios de tus Profes", 
+                embedUrl: "https://www.youtube.com/embed/8WcSuxza0f8", 
+                originalUrl: "https://www.youtube.com/watch?v=8WcSuxza0f8",
+                category: "Mi Aula Virtual", 
+                subtopics: [{l: "Bandeja de anuncios", t: 15}, {l: "Notificaciones importantes", t: 50}, {l: "Responder a comentarios", t: 85}] 
+            },
+            { 
+                id: 8, 
+                title: "💯 Entregas Exitosas: Cómo subir tus Tareas", 
+                embedUrl: "https://www.youtube.com/embed/kt3gOU4q7ko", 
+                originalUrl: "https://www.youtube.com/watch?v=kt3gOU4q7ko",
+                category: "Entregas y Notas", 
+                subtopics: [{l: "Carga de documentos", t: 30}, {l: "Tipos de archivos permitidos", t: 75}, {l: "Verificación de entrega correcta", t: 120}] 
+            },
+            { 
+                id: 9, 
+                title: "📈 Consulta tus Notas y Retroalimentaciones", 
+                embedUrl: "https://www.youtube.com/embed/RjSSbQL-7s4", 
+                originalUrl: "https://www.youtube.com/watch?v=RjSSbQL-7s4",
+                category: "Entregas y Notas", 
+                subtopics: [{l: "Panel de calificaciones", t: 15}, {l: "Revisar rúbricas", t: 55}, {l: "Comentarios del docente", t: 95}] 
+            },
+            { 
+                id: 10, 
+                title: "⏰ ¡Que no se te pase nada! Revisa tus Pendientes", 
+                embedUrl: "https://www.youtube.com/embed/vHT99Vq6NOc", 
+                originalUrl: "https://www.youtube.com/watch?v=vHT99Vq6NOc",
+                category: "Mi Aula Virtual", 
+                subtopics: [{l: "Barra lateral de tareas por hacer", t: 20}, {l: "Fechas límite límites", t: 60}, {l: "Limpiar lista de pendientes", t: 100}] 
+            },
+            { 
+                id: 11, 
+                title: "🤖 Canvas en tus Manos: Configuración en Android", 
+                embedUrl: "https://www.youtube.com/embed/Kn5s1ymeX0g", 
+                originalUrl: "https://www.youtube.com/watch?v=Kn5s1ymeX0g",
+                category: "Primeros Pasos", 
+                subtopics: [{l: "Descarga de la app", t: 10}, {l: "Vincular con Tecmilenio", t: 40}, {l: "Interfaz móvil Android", t: 85}] 
+            },
+            { 
+                id: 12, 
+                title: "🍏 Canvas en movimiento: Configuración en iOS", 
+                embedUrl: "https://www.youtube.com/embed/4uKQmi5CZzk", 
+                originalUrl: "https://www.youtube.com/watch?v=4uKQmi5CZzk",
+                category: "Primeros Pasos", 
+                subtopics: [{l: "Instalación desde App Store", t: 10}, {l: "Login institucional", t: 45}, {l: "Optimización de notificaciones push", t: 90}] 
+            },
+            { 
+                id: 13, 
+                title: "💬 Foros de Discusión: Participa y Debate", 
+                embedUrl: "https://www.youtube.com/embed/ICvqzab2Uxw", 
+                originalUrl: "https://www.youtube.com/watch?v=ICvqzab2Uxw",
+                category: "Herramientas de Comunicación", 
+                subtopics: [{l: "Crear una respuesta", t: 25}, {l: "Adjuntar archivos en foro", t: 65}, {l: "Suscripción a hilos", t: 105}] 
+            },
+            { 
+                id: 14, 
+                title: "👥 Directorio de Clase: Mira quién está en tu Curso", 
+                embedUrl: "https://www.youtube.com/embed/4AA4ETj_8NE", 
+                originalUrl: "https://www.youtube.com/watch?v=4AA4ETj_8NE",
+                category: "Herramientas de Comunicación", 
+                subtopics: [{l: "Pestaña de personas", t: 15}, {l: "Identificar a tus compañeros", t: 45}, {l: "Buscar miembros de equipo", t: 75}] 
+            },
+            { 
+                id: 15, 
+                title: "📝 Modo Examen: Cómo ingresar a Evaluaciones en Línea", 
+                embedUrl: "https://www.youtube.com/embed/ZE95c6oxZjY", 
+                originalUrl: "https://www.youtube.com/watch?v=ZE95c6oxZjY",
+                category: "Entregas y Notas", 
+                subtopics: [{l: "Acceso seguro a exámenes", t: 20}, {l: "Instrucciones previas", t: 55}, {l: "Guardar y enviar respuestas", t: 110}] 
+            },
+            { 
+                id: 16, 
+                title: "📅 Domina tus Tiempos con el Calendario de Canvas", 
+                embedUrl: "https://www.youtube.com/embed/QO-LN-WJ_e8", 
+                originalUrl: "https://www.youtube.com/watch?v=QO-LN-WJ_e8",
+                category: "Primeros Pasos", 
+                subtopics: [{l: "Vista mensual y semanal", t: 20}, {l: "Filtrar por materias", t: 60}, {l: "Agendar eventos personales", t: 100}] 
+            },
+            { 
+                id: 17, 
+                title: "⚡ Chat en Vivo: Comunicación Instantánea", 
+                embedUrl: "https://www.youtube.com/embed/Cg1Lrvoh7mQ", 
+                originalUrl: "https://www.youtube.com/watch?v=Cg1Lrvoh7mQ",
+                category: "Herramientas de Comunicación", 
+                subtopics: [{l: "Acceso al chat del aula", t: 15}, {l: "Enviar mensajes instantáneos", t: 45}, {l: "Normas de convivencia", t: 80}] 
+            },
+            { 
+                id: 18, 
+                title: "✉️ Bandeja de Entrada: Envía Mensajes Oficiales", 
+                embedUrl: "https://www.youtube.com/embed/oSg-BtUtfZc", 
+                originalUrl: "https://www.youtube.com/watch?v=oSg-BtUtfZc",
+                category: "Herramientas de Comunicación", 
+                subtopics: [{l: "Redactar nuevo correo", t: 20}, {l: "Filtrar por curso y profesor", t: 65}, {l: "Adjuntar recursos multimedia", t: 115}] 
+            },
+            { 
+                id: 19, 
+                title: "🎥 Clases en Vivo: ¿Cómo ver mis Conferencias?", 
+                embedUrl: "https://www.youtube.com/embed/AQ8xM579ZX0", 
+                originalUrl: "https://www.youtube.com/watch?v=AQ8xM579ZX0",
+                category: "Mi Aula Virtual", 
+                subtopics: [{l: "Unirse a conferencias activas", t: 30}, {l: "Requisitos de audio y video", t: 70}, {l: "Acceder a grabaciones previas", t: 120}] 
+            },
+            { 
+                id: 20, 
+                title: "🤝 Trabajo en Equipo: Realiza Colaboraciones Eficientes", 
+                embedUrl: "https://www.youtube.com/embed/Gd57m8DMJw0", 
+                originalUrl: "https://www.youtube.com/watch?v=Gd57m8DMJw0",
+                category: "Herramientas de Comunicación", 
+                subtopics: [{l: "Iniciar documento compartido", t: 25}, {l: "Integración con Office/Google", t: 70}, {l: "Gestión de permisos de equipo", t: 115}] 
+            },
+            { 
+                id: 21, 
+                title: "🛡️ Honestidad Académica: Reporte de Plagio de tu Tarea", 
+                embedUrl: "https://www.youtube.com/embed/Dnp0FoK43lw", 
+                originalUrl: "https://www.youtube.com/watch?v=Dnp0FoK43lw",
+                category: "Entregas y Notas", 
+                subtopics: [{l: "Dónde ver el porcentaje de similitud", t: 30}, {l: "Interpretar el reporte", t: 80}, {l: "Consejos para corregir citas", t: 130}] 
+            },
+            { 
+                id: 22, 
+                title: "📎 Entregas Múltiples: Cargar más de un archivo a tu tarea", 
+                embedUrl: "https://www.youtube.com/embed/OwU9a0PtUvU", 
+                originalUrl: "https://www.youtube.com/watch?v=OwU9a0PtUvU",
+                category: "Entregas y Notas", 
+                subtopics: [{l: "Añadir archivos adicionales", t: 20}, {l: "Subir carpetas o formatos variados", t: 55}, {l: "Confirmación final del envío masivo", t: 95}] 
+            }
+        ];
+
+        let currentCategory = 'Todos';
+        let currentSearch = '';
+        let selectedVideoForAI = null;
+
+        window.jumpToVideo = function(id, time) {
+            const video = videos.find(v => v.id == id);
+            if(video) openVideo(video, time);
+        };
+
+        async function callGeminiAPI(prompt, systemPrompt = "") {
+            // URL corregida al endpoint de producción estable de Gemini 2.5 Flash
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            let retries = 0;
+            while (retries < 3) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            systemInstruction: { parts: [{ text: systemPrompt }] }
+                        })
+                    });
+                    if (!response.ok) throw new Error('Error en la petición de red');
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "No se obtuvo respuesta del modelo.";
+                } catch (e) {
+                    retries++;
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+            }
+            return "Error de conexión. Asegúrate de estar ejecutando este archivo a través de un servidor local (como Live Server) para evitar restricciones del navegador.";
+        }
+
+        async function generateAISummary() {
+            if (!selectedVideoForAI) return;
+            const btn = document.getElementById('aiSummaryBtn');
+            const summaryDiv = document.getElementById('aiSummaryContent');
+            btn.disabled = true;
+            btn.innerHTML = `Analizando...`;
+            summaryDiv.classList.remove('hidden');
+            summaryDiv.innerHTML = `Procesando información...`;
+
+            const systemPrompt = "Eres un asistente académico. Resume el tutorial en dos puntos clave y ofrece un consejo de estudio.";
+            const userPrompt = `Resume el video: ${selectedVideoForAI.title}. Se trata de: ${selectedVideoForAI.category}.`;
+
+            const result = await callGeminiAPI(userPrompt, systemPrompt);
+            summaryDiv.innerHTML = `<div class="bg-white/5 p-4 rounded-xl border border-white/10 text-white/90">${result}</div>`;
+            btn.innerHTML = `Resumen Finalizado`;
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('aiChatInput');
+            const messages = document.getElementById('chatMessages');
+            const query = input.value.trim();
+            if (!query) return;
+
+            messages.innerHTML += `<div class="bg-[#004a45] text-white p-4 rounded-2xl text-sm self-end ml-auto max-w-[90%] shadow-md">${query}</div>`;
+            input.value = "";
+            messages.scrollTop = messages.scrollHeight;
+
+            const loadingId = 'loading-' + Date.now();
+            messages.innerHTML += `<div id="${loadingId}" class="bg-white border border-slate-200 p-4 rounded-2xl text-sm shadow-sm max-w-[90%] flex gap-1"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>`;
+            messages.scrollTop = messages.scrollHeight;
+
+            const context = videos.map(v => `- Video "${v.title}" (ID: ${v.id}): Temas: ${v.subtopics.map(s => s.l + " al segundo " + s.t).join(", ")}`).join("\n");
+            
+            const systemPrompt = `Eres el localizador de videos de Canvas Tecmilenio. 
+            Tu base de datos es:
+            ${context}
+            
+            Instrucciones:
+            1. Analiza la duda del alumno.
+            2. Busca en qué video e ID está la respuesta.
+            3. Responde indicando el nombre del video y el minuto.
+            4. IMPORTANTE: Debes incluir un enlace especial en tu respuesta usando este formato: <span class="ai-link" onclick="jumpToVideo(ID_DEL_VIDEO, SEGUNDOS)">Hacer clic aquí para ver este momento</span>.
+            5. Mantén un tono profesional y directo. No uses emojis.`;
+
+            const aiResponse = await callGeminiAPI(query, systemPrompt);
+            document.getElementById(loadingId).innerHTML = aiResponse.replace(/\n/g, '<br>');
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function toggleAIChat() {
+            document.getElementById('aiChatPanel').classList.toggle('active');
+        }
+
+        function openVideo(videoData, startTime = 0) {
+            selectedVideoForAI = videoData;
+            const modal = document.getElementById('videoModal');
+            const player = document.getElementById('videoPlayer');
+            const directLink = document.getElementById('directLink');
+            const modalTitle = document.getElementById('modalTitle');
+            const summaryDiv = document.getElementById('aiSummaryContent');
+            const summaryBtn = document.getElementById('aiSummaryBtn');
+            
+            summaryDiv.classList.add('hidden');
+            summaryBtn.disabled = false;
+            summaryBtn.innerHTML = `Resumen por IA`;
+
+            const origin = window.location.origin || "*";
+            const finalEmbed = `${videoData.embedUrl}?autoplay=1&start=${startTime}&rel=0&enablejsapi=1&origin=${origin}`;
+            
+            player.src = finalEmbed;
+            directLink.href = startTime > 0 ? `${videoData.originalUrl}&t=${startTime}` : videoData.originalUrl;
+            modalTitle.innerText = videoData.title;
+            
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeVideo() {
+            document.getElementById('videoPlayer').src = "";
+            document.getElementById('videoModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function setCategory(cat) {
+            currentCategory = cat;
+            renderFilters();
+            renderVideos();
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            currentSearch = e.target.value.toLowerCase();
+            renderVideos();
+        });
+
+        document.getElementById('aiChatInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendChatMessage();
+        });
+
+        document.getElementById('aiSummaryBtn').addEventListener('click', generateAISummary);
+
+        function renderFilters() {
+            const categories = ['Todos', 'Primeros Pasos', 'Mi Aula Virtual', 'Entregas y Notas', 'Herramientas de Comunicación'];
+            const container = document.getElementById('filterContainer');
+            container.innerHTML = categories.map(cat => `
+                <button onclick="setCategory('${cat}')" class="px-6 py-3 rounded-2xl text-sm font-bold transition-all ${currentCategory === cat ? 'bg-[#00a859] text-white shadow-lg' : 'bg-white text-slate-400 border border-slate-200 shadow-sm'}">
+                    ${cat}
+                </button>
+            `).join('');
+        }
+
+        function renderVideos() {
+            const grid = document.getElementById('videoGrid');
+            const filtered = videos.filter(v => {
+                const matchesCat = currentCategory === 'Todos' || v.category === currentCategory;
+                const matchesSearch = v.title.toLowerCase().includes(currentSearch);
+                return matchesCat && matchesSearch;
+            });
+
+            grid.innerHTML = filtered.map(v => `
+                <div class="video-card bg-white border border-slate-100 overflow-hidden p-8 flex flex-col shadow-sm">
+                    <span class="text-[10px] font-black text-[#00a859] bg-[#00a859]/5 px-4 py-1.5 rounded-full uppercase tracking-widest border border-[#00a859]/10 w-fit mb-4">
+                        ${v.category}
+                    </span>
+                    <h3 class="text-xl font-extrabold text-[#004a45] mb-6 min-h-[3rem] leading-tight">${v.title}</h3>
+                    <button onclick='openVideo(${JSON.stringify(v)})' class="w-full mb-8 bg-[#004a45] text-white py-4 rounded-2xl font-bold text-sm hover:bg-[#00a859] transition-all">
+                        Ver Tutorial Completo
+                    </button>
+                    <div class="mt-auto space-y-2 pt-6 border-t border-slate-50">
+                        ${v.subtopics.map(s => `
+                            <button onclick='openVideo(${JSON.stringify(v)}, ${s.t})' class="w-full flex justify-between items-center p-3 rounded-xl bg-slate-50 hover:bg-[#78be20]/10 text-[11px] font-bold text-slate-500 transition-all">
+                                <span>🎯 ${s.l}</span>
+                                <span class="bg-white px-2 py-0.5 rounded border border-slate-100">${Math.floor(s.t/60)}:${(s.t%60).toString().padStart(2, '0')}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('videoModal').addEventListener('click', function(e) {
+            if (e.target === this) closeVideo();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderFilters();
+            renderVideos();
+        });
+    </script>
+</body>
+</html>
