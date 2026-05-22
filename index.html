@@ -367,28 +367,29 @@
         };
 
         async function callGeminiAPI(prompt, systemPrompt = "") {
-            // URL corregida al endpoint de producción estable de Gemini 2.5 Flash
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-            let retries = 0;
-            while (retries < 3) {
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: prompt }] }],
-                            systemInstruction: { parts: [{ text: systemPrompt }] }
-                        })
-                    });
-                    if (!response.ok) throw new Error('Error en la petición de red');
-                    const data = await response.json();
-                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "No se obtuvo respuesta del modelo.";
-                } catch (e) {
-                    retries++;
-                    await new Promise(r => setTimeout(r, 1000));
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMessage = errorData.error?.message || `Código de estado: ${response.status}`;
+                    throw new Error(errorMessage);
                 }
+                
+                const data = await response.json();
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "No se obtuvo respuesta del modelo.";
+            } catch (e) {
+                console.error(e);
+                return `🚨 Error devuelto por Google: ${e.message}. Revisa el estado de tu API Key o prueba cambiando el modelo en el script.`;
             }
-            return "Error de conexión. Asegúrate de estar ejecutando este archivo a través de un servidor local (como Live Server) para evitar restricciones del navegador.";
         }
 
         async function generateAISummary() {
